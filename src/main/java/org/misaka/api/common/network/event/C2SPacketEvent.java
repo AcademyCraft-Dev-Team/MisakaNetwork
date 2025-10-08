@@ -1,0 +1,17 @@
+package org.misaka.api.common.network.event;
+
+import net.neoforged.bus.api.Event;
+import net.neoforged.bus.api.ICancellableEvent;
+import org.misaka.api.common.network.packet.C2SPacket;
+
+public final class C2SPacketEvent extends Event implements ICancellableEvent {
+    private final C2SPacket packet;
+
+    public C2SPacketEvent(C2SPacket packet) {
+        this.packet = packet;
+    }
+
+    public C2SPacket getPacket() {
+        return packet;
+    }
+}
