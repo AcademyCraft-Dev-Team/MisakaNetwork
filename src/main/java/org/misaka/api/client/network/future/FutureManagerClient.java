@@ -3,10 +3,10 @@ package org.misaka.api.client.network.future;
 import com.mojang.logging.LogUtils;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.ClientboundPacketListener;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.ServerboundPacketListener;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.misaka.MisakaNetworkClient;
 import org.misaka.api.common.network.NetworkSystem;
@@ -63,9 +63,9 @@ public final class FutureManagerClient extends AbstractFutureManager {
     @SubscribePacket
     public <
             RES_P extends ResponsePacket<ServerGamePacketListenerImpl, RES_P>,
-            REQ_P extends RequestPacket<ClientGamePacketListener, REQ_P, ServerGamePacketListenerImpl, RES_P>
-            > void handleFutureRequestFromServer(FutureRequestPacket<ClientGamePacketListener> futureRequestPacket) {
-        super.<ClientGamePacketListener, ServerGamePacketListenerImpl, RES_P, REQ_P>handleRequest(
+            REQ_P extends RequestPacket<ClientPacketListener, REQ_P, ServerGamePacketListenerImpl, RES_P>
+            > void handleFutureRequestFromServer(FutureRequestPacket<ClientPacketListener> futureRequestPacket) {
+        super.<ClientPacketListener, ServerGamePacketListenerImpl, RES_P, REQ_P>handleRequest(
                 futureRequestPacket, futureRequestPacket.getPacketListener(), response -> {
                     var responseTypeId = response.getPacketType().getPacketId();
                     var responseBuffer = Unpooled.buffer();
@@ -87,7 +87,7 @@ public final class FutureManagerClient extends AbstractFutureManager {
     }
 
     @SubscribePacket
-    public void handleFutureResponseFromServer(FutureResponsePacket<ClientGamePacketListener> responsePacket) {
+    public void handleFutureResponseFromServer(FutureResponsePacket<ClientPacketListener> responsePacket) {
         handleResponse(responsePacket, resPacket ->
                 Minecraft.getInstance().execute(
                         () -> executeCallback(

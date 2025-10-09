@@ -1,10 +1,10 @@
-package org.misaka.api.common.network.future;
+package org.misaka.internal.common.network;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.misaka.MisakaNetwork;
-import org.misaka.MisakaNetworkRegistries;
+import org.misaka.api.common.registries.MisakaNetworkRegistries;
 import org.misaka.api.common.network.future.packet.FutureRequestPacket;
 import org.misaka.api.common.network.future.packet.FutureResponsePacket;
 import org.misaka.api.common.network.packet.PacketType;

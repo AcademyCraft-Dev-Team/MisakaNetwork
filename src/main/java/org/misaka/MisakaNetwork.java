@@ -7,14 +7,14 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import org.misaka.api.common.network.NetworkSystem;
-import org.misaka.api.common.network.future.PacketTypes;
+import org.misaka.internal.common.network.PacketTypes;
 import org.slf4j.Logger;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.misaka.MisakaNetworkRegistries.PACKET_TYPES;
+import static org.misaka.api.common.registries.MisakaNetworkRegistries.PACKET_TYPES;
 
 @Mod(MisakaNetwork.MOD_ID)
 public final class MisakaNetwork {

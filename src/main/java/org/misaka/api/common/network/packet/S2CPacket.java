@@ -3,21 +3,21 @@ package org.misaka.api.common.network.packet;
 import com.mojang.logging.LogUtils;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.PacketType;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.ApiStatus;
 import org.misaka.MisakaNetwork;
 import org.misaka.MisakaNetworkClient;
 import org.misaka.api.common.network.NetworkSystem;
 import org.misaka.api.common.network.ThreadType;
 import org.misaka.api.common.network.event.S2CPacketEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 
-public final class S2CPacket implements net.minecraft.network.protocol.Packet<ClientGamePacketListener> {
+public final class S2CPacket implements net.minecraft.network.protocol.Packet<ClientPacketListener> {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final PacketType<S2CPacket> TYPE = new PacketType<>(PacketFlow.CLIENTBOUND, MisakaNetwork.location("s2c_packet"));
     public static final StreamCodec<FriendlyByteBuf, S2CPacket> STREAM_CODEC = net.minecraft.network.protocol.Packet.codec(
@@ -27,7 +27,7 @@ public final class S2CPacket implements net.minecraft.network.protocol.Packet<Cl
     private final int id;
     private final FriendlyByteBuf friendlyByteBuf;
 
-    public <T extends Packet<ClientGamePacketListener, T>> S2CPacket(T packet) {
+    public <T extends Packet<ClientPacketListener, T>> S2CPacket(T packet) {
         id = packet.getPacketType().getPacketId();
         friendlyByteBuf = new FriendlyByteBuf(Unpooled.buffer());
 
@@ -59,19 +59,19 @@ public final class S2CPacket implements net.minecraft.network.protocol.Packet<Cl
     }
 
     @Override
-    public PacketType<? extends net.minecraft.network.protocol.Packet<ClientGamePacketListener>> type() {
+    public PacketType<? extends net.minecraft.network.protocol.Packet<ClientPacketListener>> type() {
         return TYPE;
     }
 
     @Override
-    public void handle(ClientGamePacketListener handler) {
+    public void handle(ClientPacketListener handler) {
         Minecraft.getInstance().execute(() -> {
             var event = new S2CPacketEvent(this);
             NeoForge.EVENT_BUS.post(event);
             if (event.isCanceled()) return;
 
             var packetType = NetworkSystem.<org.misaka.api.common.network.packet.PacketType
-                    <ClientGamePacketListener, ?>>getPacketTypeById(id);
+                    <ClientPacketListener, ?>>getPacketTypeById(id);
             var packetClass = packetType.packetClass();
 
             if (NetworkSystem.isDebugInfo()) {

@@ -1,10 +1,10 @@
 package org.misaka.api.server.network.future;
 
 import io.netty.buffer.Unpooled;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.ClientboundPacketListener;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.ServerboundPacketListener;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.misaka.api.common.network.annotation.SubscribePacket;
@@ -40,7 +40,7 @@ public class FutureManagerServer extends AbstractFutureManager {
         var bytes = new byte[buffer.readableBytes()];
         buffer.readBytes(bytes);
 
-        var packet = new FutureRequestPacket<ClientGamePacketListener>(futureId, requestTypeId, bytes);
+        var packet = new FutureRequestPacket<ClientPacketListener>(futureId, requestTypeId, bytes);
         player.connection.send(new S2CPacket(packet));
     }
 
@@ -56,13 +56,13 @@ public class FutureManagerServer extends AbstractFutureManager {
 
     @SubscribePacket
     public <
-            RES_P extends ResponsePacket<ClientGamePacketListener, RES_P>,
-            REQ_P extends RequestPacket<ServerGamePacketListenerImpl, REQ_P, ClientGamePacketListener, RES_P>
+            RES_P extends ResponsePacket<ClientPacketListener, RES_P>,
+            REQ_P extends RequestPacket<ServerGamePacketListenerImpl, REQ_P, ClientPacketListener, RES_P>
             > void handleFutureRequestFromClient(FutureRequestPacket<ServerGamePacketListenerImpl> futureRequestPacket) {
         var packetListener = futureRequestPacket.getPacketListener();
         var player = packetListener.getPlayer();
 
-        super.<ServerGamePacketListenerImpl, ClientGamePacketListener, RES_P, REQ_P>handleRequest(
+        super.<ServerGamePacketListenerImpl, ClientPacketListener, RES_P, REQ_P>handleRequest(
                 futureRequestPacket, futureRequestPacket.getPacketListener(), response -> {
                     var responseTypeId = response.getPacketType().getPacketId();
                     var responseBuffer = new FriendlyByteBuf(Unpooled.buffer());
@@ -71,7 +71,7 @@ public class FutureManagerServer extends AbstractFutureManager {
                     var bytes = new byte[responseBuffer.readableBytes()];
                     responseBuffer.readBytes(bytes);
 
-                    var responsePkt = new FutureResponsePacket<ClientGamePacketListener>(
+                    var responsePkt = new FutureResponsePacket<ClientPacketListener>(
                             futureRequestPacket.getFutureId(), responseTypeId, bytes
                     );
                     player.connection.send(new S2CPacket(responsePkt));

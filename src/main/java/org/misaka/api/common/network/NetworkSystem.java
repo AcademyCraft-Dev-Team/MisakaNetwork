@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.misaka.MisakaNetworkRegistries.PACKET_TYPES;
+import static org.misaka.api.common.registries.MisakaNetworkRegistries.PACKET_TYPES;
 
 public final class NetworkSystem {
     private static final AtomicBoolean DEBUG_INFO = new AtomicBoolean(false);

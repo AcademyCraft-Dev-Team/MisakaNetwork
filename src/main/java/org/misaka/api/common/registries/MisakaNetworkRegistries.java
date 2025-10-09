@@ -1,9 +1,9 @@
-package org.misaka;
+package org.misaka.api.common.registries;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.neoforge.registries.RegistryBuilder;
-import org.misaka.api.common.network.packet.PacketType;
+import org.misaka.MisakaNetwork;import org.misaka.api.common.network.packet.PacketType;
 
 public final class MisakaNetworkRegistries {
     public static final Registry<PacketType<?, ?>> PACKET_TYPES = new RegistryBuilder<>(Keys.PACKET_TYPES).sync(true).create();

@@ -7,8 +7,8 @@ import net.minecraft.network.PacketListener;
 import org.misaka.MisakaNetwork;
 import org.misaka.api.common.network.NetworkSystem;
 import org.misaka.api.common.network.future.annotation.HandleFuture;
-import org.misaka.api.common.network.future.asm.IFutureHandlerInvoker;
 import org.misaka.api.common.network.future.asm.FutureHandlerInvokerFactory;
+import org.misaka.api.common.network.future.asm.IFutureHandlerInvoker;
 import org.misaka.api.common.network.future.packet.FuturePacket;
 import org.misaka.api.common.network.future.packet.FutureRequestPacket;
 import org.misaka.api.common.network.future.packet.RequestPacket;
@@ -182,7 +182,9 @@ public abstract class AbstractFutureManager {
         try {
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             var bytes = responsePacket.getBytes();
-            LOGGER.info(Arrays.toString(bytes));
+            if (NetworkSystem.isDebugInfo()) {
+                LOGGER.debug(Arrays.toString(bytes));
+            }
             var resP = codec.decode(buffer.writeBytes(bytes));
             resP.setPacketListener(responsePacket.getPacketListener());
             callbackExecutor.accept(resP);

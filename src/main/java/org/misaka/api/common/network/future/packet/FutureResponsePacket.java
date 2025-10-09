@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import org.misaka.api.common.network.future.PacketTypes;
+import org.misaka.internal.common.network.PacketTypes;
 import org.misaka.api.common.network.packet.PacketType;
 import org.jetbrains.annotations.ApiStatus;
 

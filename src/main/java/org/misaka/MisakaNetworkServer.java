@@ -1,8 +1,8 @@
 package org.misaka;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.neoforged.api.distmarker.Dist;
@@ -27,15 +27,15 @@ public final class MisakaNetworkServer {
         NETWORK_MANAGER.registerPacketListener(FUTURE_MANAGER);
     }
 
-    public static <P extends Packet<ClientGamePacketListener, P>> void sendPacket(ServerPlayer player, P packet) {
+    public static <P extends Packet<ClientPacketListener, P>> void sendPacket(ServerPlayer player, P packet) {
         player.connection.send(new S2CPacket(packet));
     }
 
-    public static <P extends Packet<ClientGamePacketListener, P>> void sendPacket(Connection connection, P packet) {
+    public static <P extends Packet<ClientPacketListener, P>> void sendPacket(Connection connection, P packet) {
         connection.send(new S2CPacket(packet));
     }
 
-    public static <P extends Packet<ClientGamePacketListener, P>> void sendPacket(ServerGamePacketListenerImpl listener, P packet) {
+    public static <P extends Packet<ClientPacketListener, P>> void sendPacket(ServerGamePacketListenerImpl listener, P packet) {
         listener.send(new S2CPacket(packet));
     }
 
