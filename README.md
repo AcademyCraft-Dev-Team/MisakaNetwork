@@ -17,9 +17,6 @@ dependencies {
 #### Example
 
 ```java
-
-import java.util.function.Consumer;
-
 @Mod(Example.MOD_ID)
 public class Example {
     public static final String MOD_ID = "example";
