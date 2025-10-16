@@ -91,6 +91,10 @@ public final class NetworkSystem {
             if (!method.isAnnotationPresent(SubscribePacket.class)) continue;
             foundAnnotation = true;
 
+            var isStatic = Modifier.isStatic(method.getModifiers());
+            if (instance == null && !isStatic) continue;
+            if (instance != null && isStatic) continue;
+
             if (!Modifier.isPublic(method.getModifiers())) {
                 LOGGER.error("Skipping method {} in {}: method is not public", method.getName(), clazz.getName());
                 continue;

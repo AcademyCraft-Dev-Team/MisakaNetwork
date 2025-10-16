@@ -1,10 +1,11 @@
 package org.misaka.api.common.network.packet;
 
 import com.mojang.logging.LogUtils;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.VarInt;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.PacketType;
@@ -20,23 +21,23 @@ import org.slf4j.Logger;
 public final class S2CPacket implements net.minecraft.network.protocol.Packet<ClientPacketListener> {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final PacketType<S2CPacket> TYPE = new PacketType<>(PacketFlow.CLIENTBOUND, MisakaNetwork.location("s2c_packet"));
-    public static final StreamCodec<FriendlyByteBuf, S2CPacket> STREAM_CODEC = net.minecraft.network.protocol.Packet.codec(
+    public static final StreamCodec<ByteBuf, S2CPacket> STREAM_CODEC = net.minecraft.network.protocol.Packet.codec(
             S2CPacket::write, S2CPacket::new
     );
 
     private final int id;
-    private final FriendlyByteBuf friendlyByteBuf;
+    private final ByteBuf byteBuf;
 
     public <T extends Packet<ClientPacketListener, T>> S2CPacket(T packet) {
         id = packet.getPacketType().getPacketId();
-        friendlyByteBuf = new FriendlyByteBuf(Unpooled.buffer());
+        byteBuf = Unpooled.buffer();
 
         var startTime = NetworkSystem.isDebugInfo() ? System.nanoTime() : 0;
-        packet.getPacketType().codec().encode(friendlyByteBuf, packet);
+        packet.getPacketType().codec().encode(byteBuf, packet);
 
         if (NetworkSystem.isDebugInfo()) {
             var endTime = System.nanoTime();
-            var packetSize = friendlyByteBuf.readableBytes();
+            var packetSize = byteBuf.readableBytes();
             LOGGER.debug(
                     "[SEND][S2C] Packet: {}(ID: {}), Size: {} bytes, Encode Time: {} ns",
                     packet.getClass().getSimpleName(),
@@ -48,14 +49,14 @@ public final class S2CPacket implements net.minecraft.network.protocol.Packet<Cl
     }
 
     @ApiStatus.Internal
-    public S2CPacket(FriendlyByteBuf friendlyByteBuf) {
-        id = friendlyByteBuf.readVarInt();
-        this.friendlyByteBuf = new FriendlyByteBuf(friendlyByteBuf.readBytes(friendlyByteBuf.readableBytes()));
+    public S2CPacket(ByteBuf byteBuf) {
+        id = VarInt.read(byteBuf);
+        this.byteBuf = byteBuf.readBytes(byteBuf.readableBytes());
     }
 
-    public void write(FriendlyByteBuf buffer) {
-        buffer.writeVarInt(id);
-        buffer.writeBytes(friendlyByteBuf.copy());
+    public void write(ByteBuf byteBuf) {
+        VarInt.write(byteBuf, id);
+        byteBuf.writeBytes(this.byteBuf.copy());
     }
 
     @Override
@@ -75,7 +76,7 @@ public final class S2CPacket implements net.minecraft.network.protocol.Packet<Cl
             var packetClass = packetType.packetClass();
 
             if (NetworkSystem.isDebugInfo()) {
-                var packetSize = friendlyByteBuf.readableBytes();
+                var packetSize = byteBuf.readableBytes();
                 LOGGER.info(
                         "[RECEIVE][S2C] Packet: {}(ID: {}), Size: {} bytes",
                         packetClass.getSimpleName(),
@@ -88,7 +89,7 @@ public final class S2CPacket implements net.minecraft.network.protocol.Packet<Cl
 
             try {
                 var codec = packetType.codec();
-                var instance = codec.decode(friendlyByteBuf);
+                var instance = codec.decode(byteBuf);
                 instance.setPacketListener(handler);
                 MisakaNetworkClient.NETWORK_MANAGER.dispatchPacket(instance);
             } catch (Throwable e) {

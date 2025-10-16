@@ -5,7 +5,6 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.ClientboundPacketListener;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.ServerboundPacketListener;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.misaka.MisakaNetworkClient;
@@ -40,7 +39,7 @@ public final class FutureManagerClient extends AbstractFutureManager {
         var futureId = createPendingFuture(requestPacket.getResponsePacketType(), callback, timeoutMillis);
         if (futureId == -1) return;
         var requestTypeId = requestPacket.getPacketType().getPacketId();
-        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        var buffer = Unpooled.buffer();
         requestPacket.getPacketType().codec().encode(buffer, requestPacket);
 
         var bytes = new byte[buffer.readableBytes()];

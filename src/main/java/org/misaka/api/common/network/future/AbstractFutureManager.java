@@ -2,7 +2,6 @@ package org.misaka.api.common.network.future;
 
 import com.mojang.logging.LogUtils;
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketListener;
 import org.misaka.MisakaNetwork;
 import org.misaka.api.common.network.NetworkSystem;
@@ -76,22 +75,16 @@ public abstract class AbstractFutureManager {
 
     @SuppressWarnings({"unchecked"})
     public final void registerFutureHandler(Object owner) {
-        var clazz = owner.getClass();
-        if (owner instanceof Class) {
-            clazz = (Class<?>) owner;
-        }
+        var isClassRegistration = owner instanceof Class;
+        var clazz = isClassRegistration ? (Class<?>) owner : owner.getClass();
 
         for (var method : clazz.getDeclaredMethods()) {
             if (!method.isAnnotationPresent(HandleFuture.class)) continue;
 
             var isStatic = Modifier.isStatic(method.getModifiers());
-            if (!isStatic && owner instanceof Class) {
-                LOGGER.warn("Cannot register non-static @HandleFuture method {} from a Class object.", method.getName());
-                continue;
-            }
-            if (isStatic && !(owner instanceof Class)) {
-                LOGGER.warn("Should register static @HandleFuture method {} using its Class object.", method.getName());
-            }
+
+            if (isClassRegistration && !isStatic) continue;
+            if (!isClassRegistration && isStatic) continue;
 
             if (method.getParameterCount() != 1 || !RequestPacket.class.isAssignableFrom(method.getParameterTypes()[0])) {
                 LOGGER.error("Method {} annotated with @HandleFuture must have one RequestPacket parameter.", method.getName());
@@ -180,7 +173,7 @@ public abstract class AbstractFutureManager {
         var codec = NetworkSystem.<PacketType<L, RES_P>>getPacketTypeById(targetPacketTypeId).codec();
 
         try {
-            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            var buffer = Unpooled.buffer();
             var bytes = responsePacket.getBytes();
             if (NetworkSystem.isDebugInfo()) {
                 LOGGER.debug(Arrays.toString(bytes));

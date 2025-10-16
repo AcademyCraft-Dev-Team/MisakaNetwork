@@ -108,7 +108,7 @@ public class CPacket extends Packet<ServerGamePacketListenerImpl, CPacket> {
 }
 
 @PacketTarget(ThreadType.SERVER)
-public class AFuturePacket extends RequestPacket<ServerGamePacketListenerImpl, AFuturePacket, ClientPacketListener, Response> {
+public class AFuturePacket extends RequestPacket<ServerGamePacketListenerImpl, AFuturePacket, ClientPacketListener, AFuturePacket.Response> {
     public static final StreamCodec<ByteBuf, AFuturePacket> CODEC = StreamCodec.composite(
             ByteBufCodecs.FLOAT,
             AFuturePacket::getF,
@@ -128,6 +128,11 @@ public class AFuturePacket extends RequestPacket<ServerGamePacketListenerImpl, A
     @Override
     public PacketType<ServerGamePacketListenerImpl, AFuturePacket> getPacketType() {
         return ExamplePacketTypes.AF.get();
+    }
+
+    @Override
+    public PacketType<ClientPacketListener, Response> getResponsePacketType() {
+        return ExamplePacketTypes.AFR.get();
     }
 
     @PacketTarget(ThreadType.SERVER)
@@ -155,14 +160,19 @@ public class AFuturePacket extends RequestPacket<ServerGamePacketListenerImpl, A
     }
 }
 
+@EventBusSubscriber
 public class ExampleClient {
-    public void init() {
-        MisakaNetworkClient.sendPacket(new CPacket(1f));
+    @SubscribeEvent
+    public static void init(ClientStartedEvent event) {
         // onA
         MisakaNetworkClient.NETWORK_MANAGER.registerPacketListener(ExampleClient.class);
         // onB
-        MisakaNetworkClient.NETWORK_MANAGER.registerPacketListener(this);
+        MisakaNetworkClient.NETWORK_MANAGER.registerPacketListener(new ExampleClient());
+    }
 
+    @SubscribeEvent
+    public static void res(PlayerEvent.PlayerRespawnEvent event) {
+        MisakaNetworkClient.sendPacket(new CPacket(1f));
         var request = new AFuturePacket(114514f);
         MisakaNetworkClient.FUTURE_MANAGER.sendRequestToServer(
                 request,
@@ -181,8 +191,10 @@ public class ExampleClient {
     }
 }
 
+@EventBusSubscriber
 public class ExampleServer {
-    public void init() {
+    @SubscribeEvent
+    public static void init(ServerStartedEvent event) {
         MisakaNetworkServer.NETWORK_MANAGER.registerPacketListener(ExampleServer.class);
         MisakaNetworkServer.FUTURE_MANAGER.registerFutureHandler(ExampleServer.class);
     }
@@ -191,7 +203,7 @@ public class ExampleServer {
     public static void onC(CPacket packet) {
         System.out.print(packet.getF());
         MisakaNetworkServer.sendPacket(packet.getPacketListener(), new APacket(1f));
-        MisakaNetworkServer.sendPacket(packet.getPacketListener(), new BPacket());
+        MisakaNetworkServer.sendPacket(packet.getPacketListener(), BPacket.INSTANCE);
     }
 
     @HandleFuture
