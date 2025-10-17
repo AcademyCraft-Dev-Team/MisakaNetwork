@@ -29,7 +29,7 @@ public final class C2SPacket implements net.minecraft.network.protocol.Packet<Se
 
     public <L extends ServerGamePacketListenerImpl, T extends Packet<L, T>> C2SPacket(T packet) {
         id = packet.getPacketType().getPacketId();
-        this.byteBuf = Unpooled.buffer();
+        byteBuf = Unpooled.buffer();
 
         var startTime = NetworkSystem.isDebugInfo() ? System.nanoTime() : 0;
         packet.getPacketType().codec().encode(byteBuf, packet);

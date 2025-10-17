@@ -54,14 +54,11 @@ public class FutureManagerServer extends AbstractFutureManager {
     }
 
     @SubscribePacket
-    public <
-            RES_P extends ResponsePacket<ClientPacketListener, RES_P>,
-            REQ_P extends RequestPacket<ServerGamePacketListenerImpl, REQ_P, ClientPacketListener, RES_P>
-            > void handleFutureRequestFromClient(FutureRequestPacket<ServerGamePacketListenerImpl> futureRequestPacket) {
+    public void handleFutureRequestFromClient(FutureRequestPacket<ServerGamePacketListenerImpl> futureRequestPacket) {
         var packetListener = futureRequestPacket.getPacketListener();
         var player = packetListener.getPlayer();
 
-        super.<ServerGamePacketListenerImpl, ClientPacketListener, RES_P, REQ_P>handleRequest(
+        handleRequest(
                 futureRequestPacket, futureRequestPacket.getPacketListener(), response -> {
                     var responseTypeId = response.getPacketType().getPacketId();
                     var responseBuffer = Unpooled.buffer();

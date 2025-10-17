@@ -51,8 +51,8 @@ public abstract class AbstractFutureManager {
     }
 
     public void clear() {
-        this.pendingFutures.clear();
-        this.requestHandlers.clear();
+        pendingFutures.clear();
+        requestHandlers.clear();
     }
 
     protected int generateFutureId() {
@@ -60,13 +60,13 @@ public abstract class AbstractFutureManager {
     }
 
     protected <T_RESP extends ResponsePacket<?, T_RESP>> int createPendingFuture(PacketType<?, T_RESP> responsePacketType, Consumer<T_RESP> callback, long timeoutMillis) {
-        int futureId = generateFutureId();
-        int expectedResponsePacketId = responsePacketType.getPacketId();
+        var futureId = generateFutureId();
+        var expectedResponsePacketId = responsePacketType.getPacketId();
         if (expectedResponsePacketId == -1) {
             LOGGER.error("Response packet type {} is not registered.", responsePacketType.packetClass().getName());
             return -1;
         }
-        long expireTime = System.currentTimeMillis() + timeoutMillis;
+        var expireTime = System.currentTimeMillis() + timeoutMillis;
         pendingFutures.put(futureId, new PendingFutureInfo(callback, expectedResponsePacketId, expireTime));
         return futureId;
     }

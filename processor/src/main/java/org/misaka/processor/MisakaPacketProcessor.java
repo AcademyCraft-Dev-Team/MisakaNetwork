@@ -34,12 +34,12 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        this.filer = processingEnv.getFiler();
-        this.messager = processingEnv.getMessager();
-        this.elementUtils = processingEnv.getElementUtils();
-        this.typeUtils = processingEnv.getTypeUtils();
+        filer = processingEnv.getFiler();
+        messager = processingEnv.getMessager();
+        elementUtils = processingEnv.getElementUtils();
+        typeUtils = processingEnv.getTypeUtils();
 
-        this.customProviderFqcn = processingEnv.getOptions().get("misaka.provider.fqcn");
+        customProviderFqcn = processingEnv.getOptions().get("misaka.provider.fqcn");
     }
 
     @Override
@@ -280,7 +280,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         String simpleClassName;
 
         if (customProviderFqcn != null && !customProviderFqcn.isEmpty()) {
-            int lastDot = customProviderFqcn.lastIndexOf('.');
+            var lastDot = customProviderFqcn.lastIndexOf('.');
             if (lastDot > 0) {
                 providerPackageName = customProviderFqcn.substring(0, lastDot);
                 simpleClassName = customProviderFqcn.substring(lastDot + 1);
@@ -379,7 +379,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         var paramSimpleName = paramTypeElement.getSimpleName().toString();
         var paramQualifiedName = paramTypeElement.getQualifiedName().toString();
 
-        int hash = paramQualifiedName.hashCode();
+        var hash = paramQualifiedName.hashCode();
         if (hash == Integer.MIN_VALUE) hash = 0;
         hash = Math.abs(hash);
         var shortHash = Integer.toHexString(hash);
