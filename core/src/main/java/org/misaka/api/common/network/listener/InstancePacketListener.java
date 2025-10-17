@@ -1,4 +1,4 @@
-package org.misaka.api.common.network.asm;
+package org.misaka.api.common.network.listener;
 
 public abstract class InstancePacketListener implements IPacketListener {
     protected final Object instance;

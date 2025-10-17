@@ -3,7 +3,7 @@ package org.misaka.api.common.network;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.mojang.logging.LogUtils;
-import org.misaka.api.common.network.asm.IPacketListener;
+import org.misaka.api.common.network.listener.IPacketListener;
 import org.misaka.api.common.network.packet.Packet;
 import org.misaka.internal.MisakaRegistryAggregator;
 import org.slf4j.Logger;

@@ -126,7 +126,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         var generatedSimpleClassName = buildGeneratedClassName(enclosingClass, method, parameter, "_MNListener");
         var generatedClassName = ClassName.get(packageName, generatedSimpleClassName);
 
-        var superclass = ClassName.get("org.misaka.api.common.network.asm", isStatic ? "StaticPacketListener" : "InstancePacketListener");
+        var superclass = ClassName.get("org.misaka.api.common.network.listener", isStatic ? "StaticPacketListener" : "InstancePacketListener");
         var packetSuperclassName = ClassName.get("org.misaka.api.common.network.packet", "Packet");
         var enclosingClassName = TypeName.get(enclosingClass.asType());
         var packetClassName = TypeName.get(parameter.asType());
@@ -146,7 +146,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         var handlePacketMethod = MethodSpec.methodBuilder("handlePacket")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(packetSuperclassName, "packet", Modifier.FINAL);
+                .addParameter(packetSuperclassName, "packet");
 
         if (isStatic) {
             handlePacketMethod.addStatement("$T.$L(($T) packet)", enclosingClassName, method.getSimpleName(), packetClassName);
@@ -227,8 +227,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         var generatedSimpleClassName = buildGeneratedClassName(enclosingClass, method, parameter, "_MNInvoker");
         var generatedClassName = ClassName.get(packageName, generatedSimpleClassName);
 
-        var superclass = ClassName.get("org.misaka.api.common.network.future.asm", isStatic ? "StaticFutureHandlerInvoker" : "InstanceFutureHandlerInvoker");
-        var interfaceName = ClassName.get("org.misaka.api.common.network.future.asm", "IFutureHandlerInvoker");
+        var superclass = ClassName.get("org.misaka.api.common.network.future.invoker", isStatic ? "StaticFutureHandlerInvoker" : "InstanceFutureHandlerInvoker");
         var requestPacketName = ClassName.get("org.misaka.api.common.network.future.packet", "RequestPacket");
         var responsePacketName = ClassName.get("org.misaka.api.common.network.future.packet", "ResponsePacket");
         var enclosingClassName = TypeName.get(enclosingClass.asType());
@@ -256,7 +255,6 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         var classBuilder = TypeSpec.classBuilder(generatedClassName)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(superclass)
-                .addSuperinterface(interfaceName)
                 .addMethod(getRequestPacketClassMethod)
                 .addMethod(invokeMethod.build());
 
@@ -298,16 +296,14 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
 
         var generatedProviderClassName = ClassName.get(providerPackageName, simpleClassName);
 
-        var ipacketListener = ClassName.get("org.misaka.api.common.network.asm", "IPacketListener");
-        var ifutureInvoker = ClassName.get("org.misaka.api.common.network.future.asm", "IFutureHandlerInvoker");
+        var ipacketListener = ClassName.get("org.misaka.api.common.network.listener", "IPacketListener");
+        var ifutureInvoker = ClassName.get("org.misaka.api.common.network.future.invoker", "IFutureHandlerInvoker");
         var classWildcard = ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(TypeName.OBJECT));
-        var wildcard = WildcardTypeName.subtypeOf(TypeName.OBJECT);
 
-        var ifutureInvokerWildcard = ParameterizedTypeName.get(ifutureInvoker, wildcard, wildcard, wildcard, wildcard);
         var staticListenersMapType = ParameterizedTypeName.get(ClassName.get(Map.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ipacketListener));
         var instanceListenerFactoriesMapType = ParameterizedTypeName.get(ClassName.get(Map.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ParameterizedTypeName.get(ClassName.get(Function.class), TypeName.OBJECT, ipacketListener)));
-        var staticInvokersMapType = ParameterizedTypeName.get(ClassName.get(Map.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ifutureInvokerWildcard));
-        var instanceInvokerFactoriesMapType = ParameterizedTypeName.get(ClassName.get(Map.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ParameterizedTypeName.get(ClassName.get(Function.class), TypeName.OBJECT, ifutureInvokerWildcard)));
+        var staticInvokersMapType = ParameterizedTypeName.get(ClassName.get(Map.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ifutureInvoker));
+        var instanceInvokerFactoriesMapType = ParameterizedTypeName.get(ClassName.get(Map.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ParameterizedTypeName.get(ClassName.get(Function.class), TypeName.OBJECT, ifutureInvoker)));
         var staticListenersField = FieldSpec.builder(staticListenersMapType, "STATIC_LISTENERS", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL).build();
         var instanceListenerFactoriesField = FieldSpec.builder(instanceListenerFactoriesMapType, "INSTANCE_LISTENER_FACTORIES", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL).build();
         var staticInvokersField = FieldSpec.builder(staticInvokersMapType, "STATIC_INVOKERS", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL).build();
@@ -315,8 +311,8 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
         var staticInitializer = CodeBlock.builder()
                 .addStatement("var staticListeners = new $T()", ParameterizedTypeName.get(ClassName.get(HashMap.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ipacketListener)))
                 .addStatement("var instanceListenerFactories = new $T()", ParameterizedTypeName.get(ClassName.get(HashMap.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ParameterizedTypeName.get(ClassName.get(Function.class), TypeName.OBJECT, ipacketListener))))
-                .addStatement("var staticInvokers = new $T()", ParameterizedTypeName.get(ClassName.get(HashMap.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ifutureInvokerWildcard)))
-                .addStatement("var instanceInvokerFactories = new $T()", ParameterizedTypeName.get(ClassName.get(HashMap.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ParameterizedTypeName.get(ClassName.get(Function.class), TypeName.OBJECT, ifutureInvokerWildcard))));
+                .addStatement("var staticInvokers = new $T()", ParameterizedTypeName.get(ClassName.get(HashMap.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ifutureInvoker)))
+                .addStatement("var instanceInvokerFactories = new $T()", ParameterizedTypeName.get(ClassName.get(HashMap.class), classWildcard, ParameterizedTypeName.get(ClassName.get(List.class), ParameterizedTypeName.get(ClassName.get(Function.class), TypeName.OBJECT, ifutureInvoker))));
         handlerInfoMap.forEach((sourceClass, infos) -> {
             var staticListeners = infos.stream().filter(i -> i.scope() == HandlerInfo.Scope.STATIC && i.handlerType() == HandlerInfo.HandlerType.LISTENER).toList();
             var instanceListeners = infos.stream().filter(i -> i.scope() == HandlerInfo.Scope.INSTANCE && i.handlerType() == HandlerInfo.HandlerType.LISTENER).toList();

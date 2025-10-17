@@ -5,7 +5,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketListener;
 import org.misaka.MisakaNetwork;
 import org.misaka.api.common.network.NetworkSystem;
-import org.misaka.api.common.network.future.asm.IFutureHandlerInvoker;
+import org.misaka.api.common.network.future.invoker.IFutureHandlerInvoker;
 import org.misaka.api.common.network.future.packet.FuturePacket;
 import org.misaka.api.common.network.future.packet.FutureRequestPacket;
 import org.misaka.api.common.network.future.packet.RequestPacket;
@@ -39,7 +39,7 @@ import java.util.function.Consumer;
 public abstract class AbstractFutureManager {
     private static final Logger LOGGER = LogUtils.getLogger();
     protected final Map<Integer, PendingFutureInfo> pendingFutures = new ConcurrentHashMap<>();
-    protected final Map<Integer, IFutureHandlerInvoker<?, ?, ?, ?>> requestHandlers = new ConcurrentHashMap<>();
+    protected final Map<Integer, IFutureHandlerInvoker> requestHandlers = new ConcurrentHashMap<>();
     private final AtomicInteger nextFutureId = new AtomicInteger(0);
     protected static final long DEFAULT_TIMEOUT_MS = 60000;
 
@@ -103,7 +103,7 @@ public abstract class AbstractFutureManager {
      * @param <RES_P> RequestPacket 期望的 ResponsePacket 的泛型喵, responsePacket 的类型喵
      * @param <REQ_P> RequestPacket 的泛型喵, instance 的类型喵
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings("unchecked")
     protected <
             REQ_L extends PacketListener,
             RES_L extends PacketListener,
@@ -118,7 +118,7 @@ public abstract class AbstractFutureManager {
             return;
         }
 
-        var invoker = (IFutureHandlerInvoker<RES_L, RES_P, REQ_L, REQ_P>) requestHandlers.get(targetPacketTypeId);
+        var invoker =  requestHandlers.get(targetPacketTypeId);
 
         var packetType = NetworkSystem.<PacketType<REQ_L, REQ_P>>getPacketTypeById(targetPacketTypeId);
 
@@ -132,7 +132,7 @@ public abstract class AbstractFutureManager {
 
         var responsePacket = invoker.invoke(instance);
 
-        responseSender.accept(responsePacket);
+        responseSender.accept((RES_P) responsePacket);
     }
 
     protected <
