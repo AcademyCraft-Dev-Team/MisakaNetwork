@@ -1,6 +1,6 @@
 ### How to use?
 
-#### NeoForge
+For reference, see [AcademyCraft-Reborn](https://github.com/AcademyCraft-Dev-Team/AcademyCraft-Reborn).
 
 ``` groovy
 repositories {
@@ -8,13 +8,31 @@ repositories {
         url = "https://raw.githubusercontent.com/AcademyCraft-Dev-Team/maven-repo/main/"
     }
 }
+
 dependencies {
     // It is recommended to use jarJar
-    jarJar(implementation "org.academy:misaka-network:21.10.1")
+    jarJar annotationProcessor(implementation("org.academy:misaka-network:21.10.1"))
+}
+
+idea {
+    module {
+        def buildDirFile = layout.buildDirectory.get().asFile
+        def generatedSourceDir = file("${buildDirFile}/generated/sources/annotationProcessor/java/main")
+        generatedSourceDirs += generatedSourceDir
+    }
+}
+
+tasks.named('compileJava', JavaCompile) {
+    // Optional: Fully qualified class name for the generated provider.
+    // Default if not specified:
+    // - Package: "<random>.misaka.generated"
+    // - Class: "<random>_MisakaHandlersProviderImpl"
+    // - Example: "abc123.misaka.generated.abc123_MisakaHandlersProviderImpl"
+    options.compilerArgs.add("-Amisaka.provider.fqcn=org.misaka.MisakaHandlersProviderImpl")
 }
 ```
 
-#### Example
+### Example
 
 ```java
 @Mod(Example.MOD_ID)

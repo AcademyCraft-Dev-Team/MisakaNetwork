@@ -1,0 +1,148 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+    id 'net.neoforged.moddev' version 'latest.release'
+}
+
+repositories {
+    mavenLocal()
+}
+
+base {
+    version = mod_version
+    group = mod_group_id
+    archivesName = "misaka-network"
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.named('compileJava', JavaCompile) {
+    // Optional: Fully qualified class name for the generated provider.
+    // 可选: 自定义生成的 Provider 的完全限定类名
+    //
+    // Default if not specified:
+    // 未指定时:
+    // - Package: "<random>.misaka.generated"
+    // - Class: "<random>_MisakaHandlersProviderImpl"
+    // - Example: "abc123.misaka.generated.abc123_MisakaHandlersProviderImpl"
+    options.compilerArgs.add("-Amisaka.provider.fqcn=org.misaka.MisakaHandlersProviderImpl")
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [minecraft_version      : minecraft_version,
+                             minecraft_version_range: minecraft_version_range,
+                             neo_version            : neo_version,
+                             neo_version_range      : neo_version_range,
+                             loader_version_range   : loader_version_range,
+                             mod_id                 : mod_id,
+                             mod_name               : mod_name,
+                             mod_license            : mod_license,
+                             mod_version            : mod_version,
+                             mod_authors            : mod_authors,
+                             mod_description        : mod_description]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+
+sourceSets {
+    main {
+        resources.srcDir generateModMetadata
+        java {
+            srcDir '../api/src/main/java'
+        }
+    }
+}
+
+neoForge {
+    version = project.neo_version
+    ideSyncTask generateModMetadata
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    implementation project(':processor')
+    annotationProcessor project(':processor')
+}
+
+tasks.named('jar', Jar) {
+    archiveClassifier.set('')
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from sourceSets.main.output
+    from(sourceSets.main.resources)
+    from project(':processor').sourceSets.main.output
+
+    from {
+        project(':processor').configurations.runtimeClasspath.files.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+
+tasks.named('sourcesJar', Jar) {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from sourceSets.main.allJava
+    from project(':processor').sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            groupId = 'org.academy'
+            artifactId = 'misaka-network'
+
+            artifact tasks.named('jar')
+            artifact tasks.named('sourcesJar')
+            artifact tasks.named('javadocJar')
+        }
+    }
+    repositories {
+        maven {
+            url = uri('D:/Project/maven-repo')
+        }
+    }
+}
+
+idea {
+    module {
+        var generatedSourceDir = file("build/generated/sources/annotationProcessor/java/main")
+        sourceDirs += generatedSourceDir
+        generatedSourceDirs += generatedSourceDir
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
