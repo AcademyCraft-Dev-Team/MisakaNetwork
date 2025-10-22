@@ -22,10 +22,7 @@ java {
 
 tasks.named('compileJava', JavaCompile) {
     // Optional: Fully qualified class name for the generated provider.
-    // 可选: 自定义生成的 Provider 的完全限定类名
-    //
     // Default if not specified:
-    // 未指定时:
     // - Package: "<random>.misaka.generated"
     // - Class: "<random>_MisakaHandlersProviderImpl"
     // - Example: "abc123.misaka.generated.abc123_MisakaHandlersProviderImpl"
@@ -108,14 +105,18 @@ tasks.named('jar', Jar) {
 
     from {
         project(':processor').configurations.runtimeClasspath.files.collect {
-            it.isDirectory() ? it : zipTree(it)
+            if (it.isDirectory()) {
+                it
+            } else {
+                zipTree(it).matching {
+                    exclude 'META-INF/maven/**'
+                }
+            }
         }
     }
 }
 
 tasks.named('sourcesJar', Jar) {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    from sourceSets.main.allJava
     from project(':processor').sourceSets.main.allJava
 }
 
