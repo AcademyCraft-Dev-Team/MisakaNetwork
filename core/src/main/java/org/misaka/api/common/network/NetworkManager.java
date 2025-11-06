@@ -51,9 +51,13 @@ public final class NetworkManager {
     private void registerAll(Object key, List<IPacketListener> listeners) {
         lock.writeLock().lock();
         try {
-            listenersByTarget.put(key, List.copyOf(listeners));
-            for (var listener : listeners) {
-                typedListeners.computeIfAbsent(listener.getPacketClass(), k -> new ArrayList<>()).add(listener);
+            if (!listenersByTarget.containsKey(key)) {
+                listenersByTarget.put(key, List.copyOf(listeners));
+                for (var listener : listeners) {
+                    var type = listener.getPacketClass();
+                    if (!typedListeners.containsKey(type)) typedListeners.put(type, new ArrayList<>());
+                    typedListeners.get(type).add(listener);
+                }
             }
         } finally {
             lock.writeLock().unlock();

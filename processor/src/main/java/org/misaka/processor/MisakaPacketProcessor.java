@@ -7,6 +7,7 @@ import org.misaka.processor.spec.HandlerInfo;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -208,7 +209,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
             messager.printMessage(Diagnostic.Kind.ERROR, "Parameter must be a subtype of RequestPacket.", parameter);
             return false;
         }
-        if (typeUtils.isSameType(method.getReturnType(), typeUtils.getNoType(javax.lang.model.type.TypeKind.VOID))) {
+        if (typeUtils.isSameType(method.getReturnType(), typeUtils.getNoType(TypeKind.VOID))) {
             messager.printMessage(Diagnostic.Kind.ERROR, "Method must have a return value.", method);
             return false;
         }
