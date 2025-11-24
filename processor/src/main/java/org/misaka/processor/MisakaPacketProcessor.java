@@ -290,7 +290,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
                 simpleClassName = customProviderFqcn;
             }
         } else {
-            var randomId = Long.toHexString(System.currentTimeMillis());
+            var randomId = "Gen" + Long.toHexString(System.currentTimeMillis());
             providerPackageName = randomId + ".misaka.generated";
             simpleClassName = randomId + "_MisakaHandlersProviderImpl";
         }

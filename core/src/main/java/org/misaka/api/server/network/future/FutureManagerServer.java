@@ -6,6 +6,7 @@ import net.minecraft.network.ClientboundPacketListener;
 import net.minecraft.network.ServerboundPacketListener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import org.misaka.MisakaNetworkServer;
 import org.misaka.api.common.network.annotation.SubscribePacket;
 import org.misaka.api.common.network.future.AbstractFutureManager;
 import org.misaka.api.common.network.future.packet.FutureRequestPacket;
@@ -40,7 +41,7 @@ public class FutureManagerServer extends AbstractFutureManager {
         buffer.readBytes(bytes);
 
         var packet = new FutureRequestPacket<ClientPacketListener>(futureId, requestTypeId, bytes);
-        player.connection.send(new S2CPacket(packet));
+        MisakaNetworkServer.sendPacket(player, packet);
     }
 
     public <
