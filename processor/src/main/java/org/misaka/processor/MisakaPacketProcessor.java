@@ -22,7 +22,6 @@ import java.util.function.Function;
         "org.misaka.api.common.network.annotation.SubscribePacket",
         "org.misaka.api.common.network.future.annotation.HandleFuture"
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_21)
 public final class MisakaPacketProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
@@ -44,6 +43,11 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
     }
 
     @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latest();
+    }
+
+    @Override
     public Set<String> getSupportedOptions() {
         return Set.of(
                 "misaka.project.id",
@@ -61,7 +65,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
             processSubscribePacket(roundEnv);
             processHandleFuture(roundEnv);
         } catch (Exception e) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Unhandled error in MisakaPacketProcessor: " + e);
+            messager.printMessage(Diagnostic.Kind.WARNING, "Unhandled error in MisakaPacketProcessor: " + e);
             return false;
         }
 
@@ -71,7 +75,7 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
                 try {
                     generateProviderImplementation();
                 } catch (IOException e) {
-                    messager.printMessage(Diagnostic.Kind.ERROR, "Failed to generate MisakaHandlersProvider: " + e);
+                    messager.printMessage(Diagnostic.Kind.WARNING, "Failed to generate MisakaHandlersProvider: " + e);
                 }
             } else {
                 messager.printMessage(Diagnostic.Kind.NOTE, "MisakaProcessor: Final round, but no handlers were collected.");
@@ -150,9 +154,9 @@ public final class MisakaPacketProcessor extends AbstractProcessor {
                 .addParameter(packetSuperclassName, "packet");
 
         if (isStatic) {
-            handlePacketMethod.addStatement("$T.$L(($T) packet)", enclosingClassName, method.getSimpleName(), packetClassName);
+            handlePacketMethod.addStatement("$T.$L(($T) packet)", enclosingClassName, method.getSimpleName(), rawPacketClassName);
         } else {
-            handlePacketMethod.addStatement("(($T) this.instance).$L(($T) packet)", enclosingClassName, method.getSimpleName(), packetClassName);
+            handlePacketMethod.addStatement("(($T) this.instance).$L(($T) packet)", enclosingClassName, method.getSimpleName(), rawPacketClassName);
         }
 
         var classBuilder = TypeSpec.classBuilder(generatedClassName)

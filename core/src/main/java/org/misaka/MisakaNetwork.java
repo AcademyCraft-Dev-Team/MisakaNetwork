@@ -1,7 +1,7 @@
 package org.misaka;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -28,8 +28,8 @@ public final class MisakaNetwork {
         modEventBus.addListener(MisakaNetwork::onCommonSetup);
     }
 
-    public static ResourceLocation location(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier location(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
     private static void onNewRegistry(NewRegistryEvent event) {
