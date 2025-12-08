@@ -9,8 +9,8 @@ repositories {
     mavenLocal()
     maven {
         name = "AC Dev Team's maven"
-        url = uri("D:/Project/maven-repo")
-        //    url = uri("https://raw.githubusercontent.com/AcademyCraft-Dev-Team/maven-repo/main/")
+        //url = uri("D:/Project/maven-repo")
+        url = uri("https://raw.githubusercontent.com/AcademyCraft-Dev-Team/maven-repo/main/")
         content {
             includeGroup("org.academy")
             includeGroup("net.neoforged")
