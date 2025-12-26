@@ -3,6 +3,7 @@ package org.misaka.api.common.network.future;
 import com.mojang.logging.LogUtils;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketListener;
+import org.jspecify.annotations.Nullable;
 import org.misaka.MisakaNetwork;
 import org.misaka.api.common.network.NetworkSystem;
 import org.misaka.api.common.network.future.invoker.IFutureHandlerInvoker;
@@ -43,7 +44,10 @@ public abstract class AbstractFutureManager {
     private final AtomicInteger nextFutureId = new AtomicInteger(0);
     protected static final long DEFAULT_TIMEOUT_MS = 60000;
 
-    protected record PendingFutureInfo(Consumer<?> callback, int expectedResponsePacketId, long expireTime) {
+    protected record PendingFutureInfo(Consumer<? extends @Nullable Object> callback,
+                                       int expectedResponsePacketId,
+                                       long expireTime
+    ) {
     }
 
     protected AbstractFutureManager() {
@@ -59,7 +63,9 @@ public abstract class AbstractFutureManager {
         return nextFutureId.getAndIncrement();
     }
 
-    protected <T_RESP extends ResponsePacket<?, T_RESP>> int createPendingFuture(PacketType<?, T_RESP> responsePacketType, Consumer<T_RESP> callback, long timeoutMillis) {
+    protected <T_RESP extends ResponsePacket<?, T_RESP>> int createPendingFuture(
+            PacketType<?, T_RESP> responsePacketType, Consumer<@Nullable T_RESP> callback, long timeoutMillis
+    ) {
         var futureId = generateFutureId();
         var expectedResponsePacketId = responsePacketType.getPacketId();
         if (expectedResponsePacketId == -1) {

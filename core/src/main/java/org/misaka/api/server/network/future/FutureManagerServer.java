@@ -6,6 +6,7 @@ import net.minecraft.network.ClientboundPacketListener;
 import net.minecraft.network.ServerboundPacketListener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import org.jspecify.annotations.Nullable;
 import org.misaka.MisakaNetworkServer;
 import org.misaka.api.common.network.annotation.SubscribePacket;
 import org.misaka.api.common.network.future.AbstractFutureManager;
@@ -30,7 +31,7 @@ public class FutureManagerServer extends AbstractFutureManager {
             REQ_L extends ServerboundPacketListener,
             REQ_P extends RequestPacket<REQ_L, REQ_P, RES_L, RES_P>
             >
-    void sendRequestToClient(ServerPlayer player, REQ_P requestPacket, Consumer<RES_P> callback, long timeoutMillis) {
+    void sendRequestToClient(ServerPlayer player, REQ_P requestPacket, Consumer<@Nullable RES_P> callback, long timeoutMillis) {
         var futureId = createPendingFuture(requestPacket.getResponsePacketType(), callback, timeoutMillis);
         if (futureId == -1) return;
         var requestTypeId = requestPacket.getPacketType().getPacketId();
@@ -50,7 +51,7 @@ public class FutureManagerServer extends AbstractFutureManager {
             REQ_L extends ServerboundPacketListener,
             REQ_P extends RequestPacket<REQ_L, REQ_P, RES_L, RES_P>
             >
-    void sendRequestToClient(ServerPlayer player, REQ_P requestPacket, Consumer<RES_P> callback) {
+    void sendRequestToClient(ServerPlayer player, REQ_P requestPacket, Consumer<@Nullable RES_P> callback) {
         sendRequestToClient(player, requestPacket, callback, DEFAULT_TIMEOUT_MS);
     }
 
