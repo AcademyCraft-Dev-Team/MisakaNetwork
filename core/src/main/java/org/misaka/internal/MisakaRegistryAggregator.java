@@ -1,7 +1,7 @@
 package org.misaka.internal;
 
-import org.misaka.api.common.network.listener.IPacketListener;
 import org.misaka.api.common.network.future.invoker.IFutureHandlerInvoker;
+import org.misaka.api.common.network.listener.IPacketListener;
 
 import java.util.*;
 import java.util.function.Function;
@@ -18,26 +18,35 @@ public final class MisakaRegistryAggregator {
         var staticInvokers = new HashMap<Class<?>, List<IFutureHandlerInvoker>>();
         var instanceInvokerFactories = new HashMap<Class<?>, List<Function<Object, IFutureHandlerInvoker>>>();
 
-        var providers = ServiceLoader.load(MisakaHandlersProvider.class);
+        var registry = new MisakaHandlersProvider.Registry() {
+            @Override
+            public void addStaticListener(Class<?> sourceClass, IPacketListener listener) {
+                staticListeners.computeIfAbsent(sourceClass, _ -> new ArrayList<>()).add(listener);
+            }
 
-        for (var provider : providers) {
-            provider.getStaticListeners().forEach((key, value) -> staticListeners.merge(key, value, MisakaRegistryAggregator::mergeLists));
-            provider.getInstanceListenerFactories().forEach((key, value) -> instanceListenerFactories.merge(key, value, MisakaRegistryAggregator::mergeLists));
-            provider.getStaticInvokers().forEach((key, value) -> staticInvokers.merge(key, value, MisakaRegistryAggregator::mergeLists));
-            provider.getInstanceInvokerFactories().forEach((key, value) -> instanceInvokerFactories.merge(key, value, MisakaRegistryAggregator::mergeLists));
-        }
+            @Override
+            public void addInstanceListenerFactory(Class<?> sourceClass, Function<Object, IPacketListener> factory) {
+                instanceListenerFactories.computeIfAbsent(sourceClass, _ -> new ArrayList<>()).add(factory);
+            }
+
+            @Override
+            public void addStaticInvoker(Class<?> sourceClass, IFutureHandlerInvoker invoker) {
+                staticInvokers.computeIfAbsent(sourceClass, _ -> new ArrayList<>()).add(invoker);
+            }
+
+            @Override
+            public void addInstanceInvokerFactory(Class<?> sourceClass, Function<Object, IFutureHandlerInvoker> factory) {
+                instanceInvokerFactories.computeIfAbsent(sourceClass, _ -> new ArrayList<>()).add(factory);
+            }
+        };
+
+        ServiceLoader.load(MisakaHandlersProvider.class)
+                .forEach(provider -> provider.register(registry));
 
         STATIC_LISTENERS = Collections.unmodifiableMap(staticListeners);
         INSTANCE_LISTENER_FACTORIES = Collections.unmodifiableMap(instanceListenerFactories);
         STATIC_INVOKERS = Collections.unmodifiableMap(staticInvokers);
         INSTANCE_INVOKER_FACTORIES = Collections.unmodifiableMap(instanceInvokerFactories);
-    }
-
-    private static <T> List<T> mergeLists(List<T> l1, List<T> l2) {
-        var merged = new ArrayList<T>(l1.size() + l2.size());
-        merged.addAll(l1);
-        merged.addAll(l2);
-        return merged;
     }
 
     public static List<IPacketListener> getStaticListenersFor(Class<?> targetClass) {

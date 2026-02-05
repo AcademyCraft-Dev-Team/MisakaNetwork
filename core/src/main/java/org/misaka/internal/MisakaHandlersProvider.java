@@ -1,20 +1,20 @@
 package org.misaka.internal;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.misaka.api.common.network.listener.IPacketListener;
 import org.misaka.api.common.network.future.invoker.IFutureHandlerInvoker;
+import org.misaka.api.common.network.listener.IPacketListener;
 
-import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
-@ApiStatus.Internal
 public interface MisakaHandlersProvider {
-    Map<Class<?>, List<IPacketListener>> getStaticListeners();
+    void register(Registry registry);
 
-    Map<Class<?>, List<Function<Object, IPacketListener>>> getInstanceListenerFactories();
+    interface Registry {
+        void addStaticListener(Class<?> sourceClass, IPacketListener listener);
 
-    Map<Class<?>, List<IFutureHandlerInvoker>> getStaticInvokers();
+        void addInstanceListenerFactory(Class<?> sourceClass, Function<Object, IPacketListener> factory);
 
-    Map<Class<?>, List<Function<Object, IFutureHandlerInvoker>>> getInstanceInvokerFactories();
+        void addStaticInvoker(Class<?> sourceClass, IFutureHandlerInvoker invoker);
+
+        void addInstanceInvokerFactory(Class<?> sourceClass, Function<Object, IFutureHandlerInvoker> factory);
+    }
 }
