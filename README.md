@@ -12,6 +12,7 @@ repositories {
 dependencies {
     // It is recommended to use jarJar
     jarJar annotationProcessor(implementation("org.academy:misaka-network:21.10.1"))
+    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
 }
 
 idea {
@@ -20,15 +21,6 @@ idea {
         def generatedSourceDir = file("${buildDirFile}/generated/sources/annotationProcessor/java/main")
         generatedSourceDirs += generatedSourceDir
     }
-}
-
-tasks.named('compileJava', JavaCompile) {
-    // Optional: Fully qualified class name for the generated provider.
-    // Default if not specified:
-    // - Package: "<random>.misaka.generated"
-    // - Class: "<random>_MisakaHandlersProviderImpl"
-    // - Example: "abc123.misaka.generated.abc123_MisakaHandlersProviderImpl"
-    options.compilerArgs.add("-Amisaka.provider.fqcn=org.misaka.MisakaHandlersProviderImpl")
 }
 ```
 
