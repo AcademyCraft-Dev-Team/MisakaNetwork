@@ -36,7 +36,7 @@ public final class FutureManagerClient extends AbstractFutureManager {
             REQ_L extends ServerboundPacketListener,
             REQ_P extends RequestPacket<REQ_L, REQ_P, RES_L, RES_P>
             >
-    void sendRequestToServer(REQ_P requestPacket, Consumer<@Nullable RES_P> callback, long timeoutMillis) {
+    void send(REQ_P requestPacket, Consumer<@Nullable RES_P> callback, long timeoutMillis) {
         var futureId = createPendingFuture(requestPacket.getResponsePacketType(), callback, timeoutMillis);
         if (futureId == -1) return;
         var requestTypeId = requestPacket.getPacketType().getPacketId();
@@ -47,7 +47,7 @@ public final class FutureManagerClient extends AbstractFutureManager {
         buffer.readBytes(bytes);
 
         var packet = new FutureRequestPacket<ServerGamePacketListenerImpl>(futureId, requestTypeId, bytes);
-        MisakaNetworkClient.sendPacket(packet);
+        MisakaNetworkClient.send(packet);
     }
 
     public <
@@ -56,14 +56,13 @@ public final class FutureManagerClient extends AbstractFutureManager {
             REQ_L extends ServerboundPacketListener,
             REQ_P extends RequestPacket<REQ_L, REQ_P, RES_L, RES_P>
             >
-    void sendRequestToServer(REQ_P requestPacket, Consumer<@Nullable RES_P> callback) {
-        sendRequestToServer(requestPacket, callback, DEFAULT_TIMEOUT_MS);
+    void send(REQ_P requestPacket, Consumer<@Nullable RES_P> callback) {
+        send(requestPacket, callback, DEFAULT_TIMEOUT_MS);
     }
 
     @SubscribePacket
-    public void handleFutureRequestFromServer(FutureRequestPacket<ClientPacketListener> futureRequestPacket) {
-        handleRequest(
-                futureRequestPacket, futureRequestPacket.getPacketListener(), response -> {
+    public void handle(FutureRequestPacket<ClientPacketListener> futureRequestPacket) {
+        handleRequest(futureRequestPacket, futureRequestPacket.getPacketListener(), response -> {
                     var responseTypeId = response.getPacketType().getPacketId();
                     var responseBuffer = Unpooled.buffer();
                     response.getPacketType().codec().encode(responseBuffer, response);
@@ -71,26 +70,20 @@ public final class FutureManagerClient extends AbstractFutureManager {
                     var bytes = new byte[responseBuffer.readableBytes()];
                     responseBuffer.readBytes(bytes);
 
-                    if (NetworkSystem.isDebugInfo()) {
-                        LOGGER.debug("Response bytes: {}", Arrays.toString(bytes));
-                    }
+                    if (NetworkSystem.isDebugInfo()) LOGGER.debug("Response bytes: {}", Arrays.toString(bytes));
 
                     var responsePkt = new FutureResponsePacket<ServerGamePacketListenerImpl>(
                             futureRequestPacket.getFutureId(), responseTypeId, bytes
                     );
-                    MisakaNetworkClient.sendPacket(responsePkt);
+                    MisakaNetworkClient.send(responsePkt);
                 }
         );
     }
 
     @SubscribePacket
-    public void handleFutureResponseFromServer(FutureResponsePacket<ClientPacketListener> responsePacket) {
+    public void handle(FutureResponsePacket<ClientPacketListener> responsePacket) {
         handleResponse(responsePacket, resPacket ->
-                Minecraft.getInstance().execute(
-                        () -> executeCallback(
-                                responsePacket.getFutureId(), resPacket
-                        )
-                )
+                Minecraft.getInstance().execute(() -> executeCallback(responsePacket.getFutureId(), resPacket))
         );
     }
 }

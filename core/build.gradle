@@ -2,18 +2,25 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.140'
+    id 'net.neoforged.moddev' version '2.0.141'
 }
 
 repositories {
     mavenLocal()
+    maven {
+        name = "Maven for PR #3198" // https://github.com/neoforged/NeoForge/pull/3198
+        url = uri("https://prmaven.neoforged.net/NeoForge/pr3198")
+        content {
+            includeModule("net.neoforged", "neoforge")
+            includeModule("net.neoforged", "testframework")
+        }
+    }
     maven {
         name = "AC Dev Team's maven"
         //url = uri("D:/Project/maven-repo")
         url = uri("https://raw.githubusercontent.com/AcademyCraft-Dev-Team/maven-repo/master/")
         content {
             includeGroup("org.academy")
-            includeGroup("net.neoforged")
         }
     }
 }
@@ -49,9 +56,6 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 sourceSets {
     main {
         resources.srcDir generateModMetadata
-        java {
-            srcDir '../api/src/main/java'
-        }
     }
 }
 
@@ -84,38 +88,6 @@ neoForge {
     }
 }
 
-dependencies {
-    implementation project(':processor')
-    annotationProcessor project(':processor')
-    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
-}
-
-tasks.named('jar', Jar) {
-    archiveClassifier.set('')
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    from sourceSets.main.output
-    from(sourceSets.main.resources)
-    from project(':processor').sourceSets.main.output
-
-    from {
-        project(':processor').configurations.runtimeClasspath.files.collect {
-            if (it.isDirectory()) {
-                it
-            } else {
-                zipTree(it).matching {
-                    exclude 'META-INF/maven/**'
-                }
-            }
-        }
-    }
-}
-
-tasks.named('sourcesJar', Jar) {
-    from project(':processor').sourceSets.main.allJava
-}
-
 publishing {
     publications {
         create('mavenJava', MavenPublication) {
@@ -129,7 +101,7 @@ publishing {
     }
     repositories {
         maven {
-            url = uri('D:/Project/maven-repo')
+            url = uri('/home/cane/Projects/maven-repo')
         }
     }
 }

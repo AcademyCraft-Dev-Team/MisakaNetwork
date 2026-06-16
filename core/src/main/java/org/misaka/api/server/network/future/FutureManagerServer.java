@@ -42,7 +42,7 @@ public class FutureManagerServer extends AbstractFutureManager {
         buffer.readBytes(bytes);
 
         var packet = new FutureRequestPacket<ClientPacketListener>(futureId, requestTypeId, bytes);
-        MisakaNetworkServer.sendPacket(player, packet);
+        MisakaNetworkServer.send(player, packet);
     }
 
     public <

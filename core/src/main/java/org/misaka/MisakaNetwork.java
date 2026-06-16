@@ -36,7 +36,7 @@ public final class MisakaNetwork {
         event.register(PACKET_TYPES);
     }
 
-    private static void onCommonSetup(final FMLCommonSetupEvent event) {
+    private static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(NetworkSystem::progressRegistry);
     }
 

@@ -3,11 +3,13 @@ package org.misaka.api.common.network;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.mojang.logging.LogUtils;
-import org.misaka.api.common.network.listener.IPacketListener;
+import org.misaka.api.common.network.annotation.SubscribePacket;
+import org.misaka.api.common.network.listener.PacketHandler;
 import org.misaka.api.common.network.packet.Packet;
-import org.misaka.internal.MisakaRegistryAggregator;
+import org.misaka.internal.ListenerFactory;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,77 +17,76 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * 理论上你可以自己 new 一个实例喵, 但是没什么必要喵, 推荐直接用 MisakaNetwork 的喵
- */
 public final class NetworkManager {
-    private final ConcurrentHashMap<Class<? extends Packet<?, ?>>, List<IPacketListener>> typedListeners;
-    private final Map<Object, List<IPacketListener>> listenersByTarget;
+    private final Map<Class<? extends Packet<?, ?>>, List<PacketHandler>> typedHandlers;
+    private final Map<Object, List<PacketHandler>> handlersByTarget;
     private static final Logger LOGGER = LogUtils.getLogger();
     private final ReadWriteLock lock;
 
     public NetworkManager() {
-        typedListeners = new ConcurrentHashMap<>();
-        listenersByTarget = new MapMaker().weakKeys().makeMap();
+        typedHandlers = new ConcurrentHashMap<>();
+        handlersByTarget = new MapMaker().weakKeys().makeMap();
         lock = new ReentrantReadWriteLock();
     }
 
-    public void registerPacketListener(Class<?> targetClass) {
-        var listeners = MisakaRegistryAggregator.getStaticListenersFor(targetClass);
-        if (!listeners.isEmpty()) {
-            registerAll(targetClass, listeners);
-        }
-    }
-
-    public void registerPacketListener(Object targetInstance) {
-        var factories = MisakaRegistryAggregator.getInstanceListenerFactoriesFor(targetInstance.getClass());
-        if (factories.isEmpty()) return;
-
-        var generatedListeners = factories.stream()
-                .map(factory -> factory.apply(targetInstance))
-                .toList();
-
-        registerAll(targetInstance, generatedListeners);
-    }
-
-    private void registerAll(Object key, List<IPacketListener> listeners) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void register(Class targetClass, Class packetClass, PacketHandler handler) {
         lock.writeLock().lock();
         try {
-            if (!listenersByTarget.containsKey(key)) {
-                listenersByTarget.put(key, List.copyOf(listeners));
-                for (var listener : listeners) {
-                    var type = listener.getPacketClass();
-                    if (!typedListeners.containsKey(type)) typedListeners.put(type, new ArrayList<>());
-                    typedListeners.get(type).add(listener);
-                }
-            }
+            handlersByTarget.computeIfAbsent(targetClass, _ -> new ArrayList<>()).add(handler);
+            typedHandlers.computeIfAbsent(packetClass, _ -> new ArrayList<>()).add(handler);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void unregisterPacketListener(Class<?> targetClass) {
-        unregisterPacketListenerInternal(targetClass);
-    }
-
-    public void unregisterPacketListener(Object targetInstance) {
-        unregisterPacketListenerInternal(targetInstance);
-    }
-
-    private void unregisterPacketListenerInternal(Object keyToRemove) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void register(Object targetInstance, Class packetClass, PacketHandler handler) {
         lock.writeLock().lock();
         try {
-            var handlersToRemove = listenersByTarget.remove(keyToRemove);
-            if (handlersToRemove != null) {
-                for (var handler : handlersToRemove) {
-                    var typedList = typedListeners.get(handler.getPacketClass());
-                    if (typedList != null) {
-                        typedList.remove(handler);
-                        if (typedList.isEmpty()) {
-                            typedListeners.remove(handler.getPacketClass());
-                        }
-                    }
-                }
+            handlersByTarget.computeIfAbsent(targetInstance, _ -> new ArrayList<>()).add(handler);
+            typedHandlers.computeIfAbsent(packetClass, _ -> new ArrayList<>()).add(handler);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void register(Class<?> listenerClass) {
+        for (var method : listenerClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(SubscribePacket.class) && Modifier.isStatic(method.getModifiers())) {
+                var packetType = method.getParameterTypes()[0];
+                var handler = ListenerFactory.createPacketHandler(method, null);
+                register(listenerClass, packetType.asSubclass(Packet.class), handler);
+            }
+        }
+    }
+
+    public void register(Object listenerInstance) {
+        var listenerClass = listenerInstance.getClass();
+        for (var method : listenerClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(SubscribePacket.class) && !Modifier.isStatic(method.getModifiers())) {
+                var packetType = method.getParameterTypes()[0];
+                var handler = ListenerFactory.createPacketHandler(method, listenerInstance);
+                register(listenerInstance, packetType.asSubclass(Packet.class), handler);
+            }
+        }
+    }
+
+    public void unregister(Class<?> targetClass) {
+        unregisterInternal(targetClass);
+    }
+
+    public void unregister(Object targetInstance) {
+        unregisterInternal(targetInstance);
+    }
+
+    private void unregisterInternal(Object target) {
+        lock.writeLock().lock();
+        try {
+            var removed = handlersByTarget.remove(target);
+            if (removed != null) {
+                typedHandlers.values().forEach(list -> list.removeAll(removed));
+                typedHandlers.values().removeIf(List::isEmpty);
             }
         } finally {
             lock.writeLock().unlock();
@@ -93,10 +94,10 @@ public final class NetworkManager {
     }
 
     public void dispatchPacket(Packet<?, ?> packet) {
-        List<IPacketListener> handlers;
+        List<PacketHandler> handlers;
         lock.readLock().lock();
         try {
-            var typedList = typedListeners.get(packet.getClass());
+            var typedList = typedHandlers.get(packet.getClass());
             handlers = (typedList != null && !typedList.isEmpty()) ? Lists.newArrayList(typedList) : null;
         } finally {
             lock.readLock().unlock();
@@ -107,7 +108,8 @@ public final class NetworkManager {
                 try {
                     handler.handlePacket(packet);
                 } catch (Throwable e) {
-                    LOGGER.error("Exception dispatching packet {} to handler {}: {}", packet.getClass().getSimpleName(), handler.getClass().getName(), e.getMessage(), e);
+                    LOGGER.error("Exception dispatching packet {} to handler {}: {}",
+                            packet.getClass().getSimpleName(), handler.getClass().getName(), e.getMessage(), e);
                 }
             }
         }

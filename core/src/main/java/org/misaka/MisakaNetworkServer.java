@@ -24,18 +24,18 @@ public final class MisakaNetworkServer {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     static {
-        NETWORK_MANAGER.registerPacketListener(FUTURE_MANAGER);
+        NETWORK_MANAGER.register(FUTURE_MANAGER);
     }
 
-    public static <P extends Packet<ClientPacketListener, P>> void sendPacket(ServerPlayer player, P packet) {
+    public static <P extends Packet<ClientPacketListener, P>> void send(ServerPlayer player, P packet) {
         player.connection.send(new S2CPacket(packet));
     }
 
-    public static <P extends Packet<ClientPacketListener, P>> void sendPacket(Connection connection, P packet) {
+    public static <P extends Packet<ClientPacketListener, P>> void send(Connection connection, P packet) {
         connection.send(new S2CPacket(packet));
     }
 
-    public static <P extends Packet<ClientPacketListener, P>> void sendPacket(ServerGamePacketListenerImpl listener, P packet) {
+    public static <P extends Packet<ClientPacketListener, P>> void send(ServerGamePacketListenerImpl listener, P packet) {
         listener.send(new S2CPacket(packet));
     }
 

@@ -25,10 +25,10 @@ public final class MisakaNetworkClient {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     static {
-        NETWORK_MANAGER.registerPacketListener(FUTURE_MANAGER);
+        NETWORK_MANAGER.register(FUTURE_MANAGER);
     }
 
-    public static void sendPacket(net.minecraft.network.protocol.Packet<?> packet) {
+    public static void send(net.minecraft.network.protocol.Packet<?> packet) {
         if (connection != null) {
             connection.send(packet);
         }
@@ -40,8 +40,8 @@ public final class MisakaNetworkClient {
         shutdownExecutorService();
     }
 
-    public static <P extends Packet<ServerGamePacketListenerImpl, P>> void sendPacket(P packet) {
-        sendPacket(new C2SPacket(packet));
+    public static <P extends Packet<ServerGamePacketListenerImpl, P>> void send(P packet) {
+        send(new C2SPacket(packet));
     }
 
     private MisakaNetworkClient() {
