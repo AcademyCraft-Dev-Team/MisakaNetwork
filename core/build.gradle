@@ -8,14 +8,6 @@ plugins {
 repositories {
     mavenLocal()
     maven {
-        name = "Maven for PR #3198" // https://github.com/neoforged/NeoForge/pull/3198
-        url = uri("https://prmaven.neoforged.net/NeoForge/pr3198")
-        content {
-            includeModule("net.neoforged", "neoforge")
-            includeModule("net.neoforged", "testframework")
-        }
-    }
-    maven {
         name = "AC Dev Team's maven"
         //url = uri("D:/Project/maven-repo")
         url = uri("https://raw.githubusercontent.com/AcademyCraft-Dev-Team/maven-repo/master/")
@@ -78,6 +70,7 @@ neoForge {
         }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
+            systemProperty 'neoforge.disableGlValidation', 'true'
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
